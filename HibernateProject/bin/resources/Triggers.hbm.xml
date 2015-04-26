@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping package="bases2.brianmendoza.hibernate">
+    
+    <!-- Funcion ejecutada cuando se dispara el trigger refund_before_cancel
+    	 para reembolsar a los usuarios que compraron un vale de la promocion
+    	 cancelada pero no la han utilizado todavia -->
+	<database-object>
+	<create>
+		CREATE OR REPLACE FUNCTION refund()
+		RETURNS trigger AS
+		$REFUND$
+		BEGIN
+			UPDATE Personas p
+			SET dinero_virtual = dinero_virtual + (SELECT SUM (monto_pagado)
+												   FROM Facturas f, Vales v
+												   WHERE f.id_factura = v.codigo_factura AND
+														 v.persona_que_compra = p.username AND
+														 v.promocion_comprada = NEW.id_promocion AND
+														 v.utilizado = false)
+			WHERE p.username IN (SELECT DISTINCT persona_que_compra
+								 FROM Vales v
+								 WHERE v.promocion_comprada = NEW.id_promocion AND
+								 	   v.utilizado = false);
+			RETURN NEW;
+		END;
+		$REFUND$ LANGUAGE plpgsql;
+	</create>
+	<drop>
+		DROP FUNCTION refund();
+	</drop>
+	<dialect-scope name="org.hibernate.dialect.PostgreSQLDialect"/>
+	</database-object>
+    
+    <!-- Trigger que se dispara cuando el status de una Promocion es
+    	 cambiada a CANCELADO -->
+	<database-object>
+	<create>      
+		CREATE TRIGGER refund_before_cancel
+		BEFORE UPDATE OF status ON Promociones
+		FOR EACH ROW
+		WHEN (NEW.status = 'CANCELADO')
+			EXECUTE PROCEDURE refund();
+		END;
+	</create>
+	<drop>
+		DROP TRIGGER refund_before_cancel ON Promociones;
+	</drop>
+	<dialect-scope name="org.hibernate.dialect.PostgreSQLDialect"/>
+	</database-object>
+     
+     <!-- Funcion ejecutada cuando se dispara el trigger expired -->
+	<database-object>
+	<create>
+		CREATE OR REPLACE FUNCTION changeToExpired()
+		RETURNS trigger AS
+		$CHANGETOEXPIRED$
+		BEGIN
+			UPDATE Promociones p
+			SET status = 'EXPIRADO'
+			WHERE p.id_promocion = NEW.id_promocion;
+			RETURN NEW;
+		END;
+		$CHANGETOEXPIRED$ LANGUAGE plpgsql;
+	</create>
+	<drop>
+		DROP FUNCTION changeToExpired();
+	</drop>
+	<dialect-scope name="org.hibernate.dialect.PostgreSQLDialect"/>
+	</database-object>
+    
+    <!-- Trigger que se dispara cuando se actualiza una promocion
+    	 y la nueva fecha final es anterior a la fecha de hoy, lo
+    	 cual indica que la promocion esta expirada y el status es
+    	 cambiado a expirado para reflejar esto -->
+	<database-object>
+	<create>      
+		CREATE TRIGGER expired
+		AFTER UPDATE ON Promociones
+		FOR EACH ROW
+		WHEN (OLD.* IS DISTINCT FROM NEW.* AND
+				current_date > NEW.fecha_fin_promocion)
+			EXECUTE PROCEDURE changeToExpired();
+		END;
+	</create>
+	<drop>
+		DROP TRIGGER expired ON Promociones;
+	</drop>
+	<dialect-scope name="org.hibernate.dialect.PostgreSQLDialect"/>
+	</database-object>
+    
+</hibernate-mapping>

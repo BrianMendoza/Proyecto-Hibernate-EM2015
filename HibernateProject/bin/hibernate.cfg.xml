@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+
+<hibernate-configuration>
+    <session-factory>
+    
+    	<!-- Database connection settings -->
+        <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
+        <property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
+        <property name="hibernate.connection.username">bases2</property>
+        <property name="hibernate.connection.password">hibernate</property>
+        <property name="hibernate.connection.url">jdbc:postgresql://localhost:5432/HibernateBases2</property>
+
+
+		<!-- JDBC connection pool (use the built-in) -->
+        <property name="connection_pool_size">1</property>
+
+		<!-- SQL dialect -->
+		<property name="dialect">org.hibernate.dialect.PostgreSQLDialect</property>
+
+        <!-- Disable the second-level cache -->
+		<property name="cache.provider_class">org.hibernate.cache.NoCacheProvider</property>
+
+		<!-- Echo all executed SQL to stdout -->
+		<property name="show_sql">false</property>
+
+		<!-- Drop and re-create the database schema on startup -->
+		<property name="hbm2ddl.auto">create</property>
+		
+		<!-- Mention here all the model classes along with their package name -->
+		<!-- Using Annotations -->
+		<mapping class="bases2.brianmendoza.hibernate.Factura"/>
+		<mapping class="bases2.brianmendoza.hibernate.TDC"/>
+		<mapping class="bases2.brianmendoza.hibernate.Usuario"/>
+		<mapping class="bases2.brianmendoza.hibernate.Empresa"/>
+		<mapping class="bases2.brianmendoza.hibernate.Persona"/>
+		<mapping class="bases2.brianmendoza.hibernate.Coordenadas"/>
+		<mapping class="bases2.brianmendoza.hibernate.CuentaSocial"/>
+		<mapping class="bases2.brianmendoza.hibernate.Promocion"/>
+		<mapping class="bases2.brianmendoza.hibernate.Vigencia"/>
+		<mapping class="bases2.brianmendoza.hibernate.Vale"/>
+		<mapping class="bases2.brianmendoza.hibernate.Comparte"/>
+		
+		<mapping resource="resources/Triggers.hbm.xml"/>
+		
+
+    </session-factory>
+</hibernate-configuration>
